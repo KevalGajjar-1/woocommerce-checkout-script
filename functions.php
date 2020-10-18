@@ -199,16 +199,25 @@ function my_custom_checkout_field_process()
         $product = $cart_item['data'];
         if (!empty($product)) {
             // $image = wp_get_attachment_image_src( get_post_thumbnail_id( $product->ID ), 'single-post-thumbnail' );
-            echo "<pre>";
-            print_r($product->get_id());
-            echo "</pre>";
+            $bulky_item = get_post_meta($product->get_id(), 'bulky item' )[0];
+            if($bulky_item === 'No'){
+                foreach($postcode as $matchPostcode){
+                    var_dump(in_array($_POST['billing_billing_postcode'], $matchPostcode));
+                    var_dump(in_array($_POST['billing_billing_state'], $matchPostcode));
+                    var_dump(in_array($_POST['billing_billing_city'], $matchPostcode));
+                    if(in_array($_POST['billing_billing_postcode'], $matchPostcode)){
+                        wc_add_notice(__('This item can not ship with this postcode'), 'error');
+                    }
+                }
+            }    
+             // print_r($product->get_id());
             // to display only the first product image uncomment the line bellow
             // break;
         }
     }
 
     // Check if set, if its not set add an error.
-    if (!$_POST['przetwarzanie_danych_do_zamowienia']) {
+    if ($_POST['billing_billing_state']) {
 
         wc_add_notice(__('Please select required box'), 'error');
     }
@@ -218,7 +227,7 @@ add_filter('woocommerce_checkout_fields', 'partial_unsetting_checkout_fields');
 function partial_unsetting_checkout_fields($fields)
 {
     unset($fields['billing']['billing_state']);
-    unset($fields['billing']['billing_postcode']);
+    unset($fields['billing']['billing_city']);
 
     return $fields;
 }
@@ -244,19 +253,21 @@ function art_override_default_address_fields($address_fields)
         'WA' => 'Western Australia',
     );
 
-    // // @ for postcode
-    // $address_fields['billing_postcode']['type'] = 'text';
-    // $address_fields['billing_postcode']['class'] = array('form-row form-group col-sm-6 address-field validate-required');
-    // $address_fields['billing_postcode']['required'] = true;
-    // $address_fields['billing_postcode']['label'] = __('Postcode', 'my_theme_slug');
-    // $address_fields['billing_postcode']['placeholder'] = __('Enter your postcode', 'my_theme_slug');
+    // @ for postcode
+    $address_fields['billing_city']['type'] = 'select';
+    $address_fields['billing_city']['options'] = array(
+        '' => 'Please Select Suburb',
+    );
+    $address_fields['billing_city']['class'] = array('form-row form-group col-sm-6 address-field validate-required');
+    $address_fields['billing_city']['required'] = true;
+    $address_fields['billing_city']['label'] = __('Suburb', 'my_theme_slug');
 
     return $address_fields;
 }
 add_filter('woocommerce_checkout_fields', 'addBootstrapToCheckoutFields');
 function addBootstrapToCheckoutFields($fields)
 {
-    $fields['billing']['billing_billing_postcode']['input_class'][] = 'input-text form-control';
+    $fields['billing']['billing_billing_city']['input_class'][] = 'input-text form-control';
     return $fields;
 }
 
